@@ -1,0 +1,8 @@
+{application, dw_gen_listener,
+ [{description, "My Generic TCP Listener"},
+  {vsn, "1.0"},
+  {modules, [dw_gen_listener]},
+  {registered,[]},
+  {applications, [kernel, stdlib]},
+  {start_phases, []}
+]}.
