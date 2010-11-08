@@ -26,7 +26,7 @@
 -module (dw_gen_listener).
 -behaviour (gen_server).
 
--export ([start_link/2]).
+-export ([start_link/2, start_link/3]).
 -export ([init/1]).
 -export ([handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -export ([got_connection/2, got_socket_error/2]).
@@ -35,10 +35,14 @@
 % Main socket listener process %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start_link (Port, {Module, Fun, Args}) when is_integer(Port), is_atom(Module), is_atom(Fun) ->
-	gen_server:start_link({local, list_to_atom(atom_to_list(Module) ++ "_listener")}, ?MODULE, {Port, {Module, Fun, Args}}, []).
+	gen_server:start_link({local, list_to_atom(atom_to_list(Module) ++ "_listener")}, ?MODULE,
+		{Port, {Module, Fun, Args}, [binary, {packet, line}, {reuseaddr, true}, {active, false}, {keepalive, true}, {send_timeout, 10}]},
+		[]).
+start_link (Port, {Module, Fun, Args}, Opts) when is_integer(Port), is_atom(Module), is_atom(Fun), is_list(Opts) ->
+	gen_server:start_link({local, list_to_atom(atom_to_list(Module) ++ "_listener")}, ?MODULE, {Port, {Module, Fun, Args}, Opts}, []).
 
-init ({Port, Mfa}) ->
-	case gen_tcp:listen(Port, [binary, {packet, line}, {reuseaddr, true}, {active, false}, {keepalive, true}, {send_timeout, 10}]) of
+init ({Port, Mfa, Opts}) ->
+	case gen_tcp:listen(Port, Opts) of
 		{ok, ListenSocket} ->
 			process_flag(trap_exit, true),
 			watch_listen_socket(ListenSocket),
